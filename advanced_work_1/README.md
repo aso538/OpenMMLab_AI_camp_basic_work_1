@@ -1,0 +1,2 @@
+利用efficientnet对cifar10进行分类，对学习率、batch等部分超参进行调整，目前测试集上topk1准确率为91.41%。
+原计划是想利用efficientformer，然而在计算注意力偏置的时候报错，原因未知,查找中。
