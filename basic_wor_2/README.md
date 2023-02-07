@@ -6,3 +6,7 @@ color_splash.py为color_splash特效
 
 链接：https://pan.baidu.com/s/1kaF1v1riJt_EYS2FIUaCgg?pwd=qpnt 
 提取码：qpnt 
+
+- 效果图
+
+![效果图](./color_splash_1.gif)
