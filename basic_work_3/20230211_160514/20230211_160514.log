@@ -1,0 +1,1223 @@
+2023/02/11 16:05:18 - mmengine - INFO - 
+------------------------------------------------------------
+System environment:
+    sys.platform: win32
+    Python: 3.7.16 (default, Jan 17 2023, 16:06:28) [MSC v.1916 64 bit (AMD64)]
+    CUDA available: True
+    numpy_random_seed: 1381391612
+    GPU 0: NVIDIA GeForce RTX 2060
+    CUDA_HOME: C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.2
+    NVCC: Cuda compilation tools, release 10.2, V10.2.8
+    MSVC: 用于 x64 的 Microsoft (R) C/C++ 优化编译器 19.28.29915 版
+    GCC: n/a
+    PyTorch: 1.8.1+cu101
+    PyTorch compiling details: PyTorch built with:
+  - C++ Version: 199711
+  - MSVC 192829913
+  - Intel(R) Math Kernel Library Version 2020.0.2 Product Build 20200624 for Intel(R) 64 architecture applications
+  - Intel(R) MKL-DNN v1.7.0 (Git Hash 7aed236906b1f7a05c0917e5257a1af05e9ff683)
+  - OpenMP 2019
+  - CPU capability usage: AVX2
+  - CUDA Runtime 10.1
+  - NVCC architecture flags: -gencode;arch=compute_37,code=sm_37;-gencode;arch=compute_50,code=sm_50;-gencode;arch=compute_60,code=sm_60;-gencode;arch=compute_61,code=sm_61;-gencode;arch=compute_70,code=sm_70;-gencode;arch=compute_75,code=sm_75;-gencode;arch=compute_37,code=compute_37
+  - CuDNN 7.6.4
+  - Magma 2.5.4
+  - Build settings: BLAS_INFO=mkl, BUILD_TYPE=Release, CUDA_VERSION=10.1, CUDNN_VERSION=7.6.4, CXX_COMPILER=C:/w/b/windows/tmp_bin/sccache-cl.exe, CXX_FLAGS=/DWIN32 /D_WINDOWS /GR /EHsc /w /bigobj -DUSE_PTHREADPOOL -openmp:experimental -DNDEBUG -DUSE_FBGEMM -DUSE_XNNPACK, LAPACK_INFO=mkl, PERF_WITH_AVX=1, PERF_WITH_AVX2=1, PERF_WITH_AVX512=1, TORCH_VERSION=1.8.1, USE_CUDA=ON, USE_CUDNN=ON, USE_EXCEPTION_PTR=1, USE_GFLAGS=OFF, USE_GLOG=OFF, USE_MKL=ON, USE_MKLDNN=ON, USE_MPI=OFF, USE_NCCL=OFF, USE_NNPACK=OFF, USE_OPENMP=ON, 
+
+    TorchVision: 0.9.1+cu101
+    OpenCV: 4.7.0
+    MMEngine: 0.5.0
+
+Runtime environment:
+    cudnn_benchmark: True
+    mp_cfg: {'mp_start_method': 'fork', 'opencv_num_threads': 0}
+    dist_cfg: {'backend': 'nccl'}
+    seed: None
+    Distributed launcher: none
+    Distributed training: False
+    GPU number: 1
+------------------------------------------------------------
+
+2023/02/11 16:05:19 - mmengine - INFO - Config:
+norm_cfg = dict(type='SyncBN', eps=0.001, requires_grad=True)
+crop_size = (480, 480)
+img_scale = (512, 512)
+data_preprocessor = dict(
+    type='SegDataPreProcessor',
+    mean=[123.675, 116.28, 103.53],
+    std=[58.395, 57.12, 57.375],
+    bgr_to_rgb=True,
+    pad_val=0,
+    seg_pad_val=255,
+    size=(480, 480))
+model = dict(
+    type='EncoderDecoder',
+    data_preprocessor=dict(
+        type='SegDataPreProcessor',
+        mean=[123.675, 116.28, 103.53],
+        std=[58.395, 57.12, 57.375],
+        bgr_to_rgb=True,
+        pad_val=0,
+        seg_pad_val=255,
+        size=(480, 480)),
+    pretrained=
+    'C:\\Users\\大熊SsSsSs\\.cache\\torch\\hub\\checkpoints\\mobilenet_v3_large-bc2c3fd3.pth',
+    backbone=dict(
+        type='MobileNetV3',
+        arch='large',
+        out_indices=(1, 3, 16),
+        norm_cfg=dict(type='SyncBN', eps=0.001, requires_grad=True)),
+    decode_head=dict(
+        type='LRASPPHead',
+        in_channels=(16, 24, 960),
+        in_index=(0, 1, 2),
+        channels=128,
+        input_transform='multiple_select',
+        dropout_ratio=0.1,
+        num_classes=2,
+        norm_cfg=dict(type='SyncBN', eps=0.001, requires_grad=True),
+        act_cfg=dict(type='ReLU'),
+        align_corners=False,
+        loss_decode=dict(
+            type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0)),
+    train_cfg=dict(),
+    test_cfg=dict(mode='whole'))
+dataset_type = 'GlomeruliDataset'
+data_root = 'E:\\mmsegmentation\\Glomeruli-dataset'
+train_pipeline = [
+    dict(type='LoadImageFromFile'),
+    dict(type='LoadAnnotations'),
+    dict(
+        type='RandomResize',
+        scale=(512, 512),
+        ratio_range=(0.5, 2.0),
+        keep_ratio=True),
+    dict(type='RandomCrop', crop_size=(480, 480), cat_max_ratio=0.75),
+    dict(type='RandomFlip', prob=0.5),
+    dict(type='PhotoMetricDistortion'),
+    dict(type='PackSegInputs')
+]
+test_pipeline = [
+    dict(type='LoadImageFromFile'),
+    dict(type='Resize', scale=(512, 512), keep_ratio=True),
+    dict(type='LoadAnnotations'),
+    dict(type='PackSegInputs')
+]
+img_ratios = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75]
+tta_pipeline = [
+    dict(type='LoadImageFromFile', backend_args=dict(backend='local')),
+    dict(
+        type='TestTimeAug',
+        transforms=[[{
+            'type': 'Resize',
+            'scale_factor': 0.5,
+            'keep_ratio': True
+        }, {
+            'type': 'Resize',
+            'scale_factor': 0.75,
+            'keep_ratio': True
+        }, {
+            'type': 'Resize',
+            'scale_factor': 1.0,
+            'keep_ratio': True
+        }, {
+            'type': 'Resize',
+            'scale_factor': 1.25,
+            'keep_ratio': True
+        }, {
+            'type': 'Resize',
+            'scale_factor': 1.5,
+            'keep_ratio': True
+        }, {
+            'type': 'Resize',
+            'scale_factor': 1.75,
+            'keep_ratio': True
+        }],
+                    [{
+                        'type': 'RandomFlip',
+                        'prob': 0.0,
+                        'direction': 'horizontal'
+                    }, {
+                        'type': 'RandomFlip',
+                        'prob': 1.0,
+                        'direction': 'horizontal'
+                    }], [{
+                        'type': 'LoadAnnotations'
+                    }], [{
+                        'type': 'PackSegInputs'
+                    }]])
+]
+train_dataloader = dict(
+    batch_size=4,
+    num_workers=2,
+    persistent_workers=True,
+    sampler=dict(type='InfiniteSampler', shuffle=True),
+    dataset=dict(
+        type='GlomeruliDataset',
+        data_root='E:\\mmsegmentation\\Glomeruli-dataset',
+        data_prefix=dict(img_path='images', seg_map_path='masks'),
+        pipeline=[
+            dict(type='LoadImageFromFile'),
+            dict(type='LoadAnnotations'),
+            dict(
+                type='RandomResize',
+                scale=(512, 512),
+                ratio_range=(0.5, 2.0),
+                keep_ratio=True),
+            dict(type='RandomCrop', crop_size=(480, 480), cat_max_ratio=0.75),
+            dict(type='RandomFlip', prob=0.5),
+            dict(type='PhotoMetricDistortion'),
+            dict(type='PackSegInputs')
+        ],
+        ann_file='splits/train.txt'))
+val_dataloader = dict(
+    batch_size=1,
+    num_workers=1,
+    persistent_workers=True,
+    sampler=dict(type='DefaultSampler', shuffle=False),
+    dataset=dict(
+        type='GlomeruliDataset',
+        data_root='E:\\mmsegmentation\\Glomeruli-dataset',
+        data_prefix=dict(img_path='images', seg_map_path='masks'),
+        pipeline=[
+            dict(type='LoadImageFromFile'),
+            dict(type='Resize', scale=(512, 512), keep_ratio=True),
+            dict(type='LoadAnnotations'),
+            dict(type='PackSegInputs')
+        ],
+        ann_file='splits/val.txt'))
+test_dataloader = dict(
+    batch_size=1,
+    num_workers=1,
+    persistent_workers=True,
+    sampler=dict(type='DefaultSampler', shuffle=False),
+    dataset=dict(
+        type='GlomeruliDataset',
+        data_root='E:\\mmsegmentation\\Glomeruli-dataset',
+        data_prefix=dict(img_path='images', seg_map_path='masks'),
+        pipeline=[
+            dict(type='LoadImageFromFile'),
+            dict(type='Resize', scale=(512, 512), keep_ratio=True),
+            dict(type='LoadAnnotations'),
+            dict(type='PackSegInputs')
+        ],
+        ann_file='splits/val.txt'))
+val_evaluator = dict(type='IoUMetric', iou_metrics=['mIoU'])
+test_evaluator = dict(type='IoUMetric', iou_metrics=['mIoU'])
+optimizer = dict(type='SGD', lr=0.01, momentum=0.9, weight_decay=0.0005)
+optim_wrapper = dict(
+    type='OptimWrapper',
+    optimizer=dict(type='SGD', lr=0.01, momentum=0.9, weight_decay=0.0005),
+    clip_grad=None)
+param_scheduler = [
+    dict(
+        type='PolyLR',
+        eta_min=0.0001,
+        power=0.9,
+        begin=0,
+        end=160000,
+        by_epoch=False)
+]
+train_cfg = dict(type='IterBasedTrainLoop', max_iters=16000, val_interval=1600)
+val_cfg = dict(type='ValLoop')
+test_cfg = dict(type='TestLoop')
+default_hooks = dict(
+    timer=dict(type='IterTimerHook'),
+    logger=dict(type='LoggerHook', interval=100, log_metric_by_epoch=False),
+    param_scheduler=dict(type='ParamSchedulerHook'),
+    checkpoint=dict(type='CheckpointHook', by_epoch=False, interval=1600),
+    sampler_seed=dict(type='DistSamplerSeedHook'),
+    visualization=dict(type='SegVisualizationHook'))
+default_scope = 'mmseg'
+env_cfg = dict(
+    cudnn_benchmark=True,
+    mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0),
+    dist_cfg=dict(backend='nccl'))
+vis_backends = [dict(type='LocalVisBackend')]
+visualizer = dict(
+    type='SegLocalVisualizer',
+    vis_backends=[dict(type='LocalVisBackend')],
+    name='visualizer')
+log_processor = dict(by_epoch=False)
+log_level = 'INFO'
+load_from = 'E:\\mmsegmentation\\lraspp_m-v3-d8_512x1024_320k_cityscapes_20201224_220337-cfe8fb07.pth'
+resume = False
+tta_model = dict(type='SegTTAModel')
+runner = dict(type='IterBasedRunner', max_iters=320000)
+launcher = 'none'
+work_dir = './work_dirs\\mobilenet-v3-d8_lraspp_1xb4-2k_glomeruli-256x256'
+
+2023/02/11 16:05:19 - mmengine - WARNING - The "visualizer" registry in mmseg did not set import location. Fallback to call `mmseg.utils.register_all_modules` instead.
+2023/02/11 16:05:19 - mmengine - WARNING - The "vis_backend" registry in mmseg did not set import location. Fallback to call `mmseg.utils.register_all_modules` instead.
+2023/02/11 16:05:21 - mmengine - WARNING - The "model" registry in mmseg did not set import location. Fallback to call `mmseg.utils.register_all_modules` instead.
+2023/02/11 16:05:22 - mmengine - INFO - Distributed training is not used, all SyncBatchNorm (SyncBN) layers in the model will be automatically reverted to BatchNormXd layers if they are used.
+2023/02/11 16:05:22 - mmengine - WARNING - The "hook" registry in mmseg did not set import location. Fallback to call `mmseg.utils.register_all_modules` instead.
+2023/02/11 16:05:22 - mmengine - INFO - Hooks will be executed in the following order:
+before_run:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(BELOW_NORMAL) LoggerHook                         
+ -------------------- 
+before_train:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(NORMAL      ) IterTimerHook                      
+(VERY_LOW    ) CheckpointHook                     
+ -------------------- 
+before_train_epoch:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(NORMAL      ) IterTimerHook                      
+(NORMAL      ) DistSamplerSeedHook                
+ -------------------- 
+before_train_iter:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(NORMAL      ) IterTimerHook                      
+ -------------------- 
+after_train_iter:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(NORMAL      ) IterTimerHook                      
+(NORMAL      ) SegVisualizationHook               
+(BELOW_NORMAL) LoggerHook                         
+(LOW         ) ParamSchedulerHook                 
+(VERY_LOW    ) CheckpointHook                     
+ -------------------- 
+after_train_epoch:
+(NORMAL      ) IterTimerHook                      
+(LOW         ) ParamSchedulerHook                 
+(VERY_LOW    ) CheckpointHook                     
+ -------------------- 
+before_val_epoch:
+(NORMAL      ) IterTimerHook                      
+ -------------------- 
+before_val_iter:
+(NORMAL      ) IterTimerHook                      
+ -------------------- 
+after_val_iter:
+(NORMAL      ) IterTimerHook                      
+(NORMAL      ) SegVisualizationHook               
+(BELOW_NORMAL) LoggerHook                         
+ -------------------- 
+after_val_epoch:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(NORMAL      ) IterTimerHook                      
+(BELOW_NORMAL) LoggerHook                         
+(LOW         ) ParamSchedulerHook                 
+(VERY_LOW    ) CheckpointHook                     
+ -------------------- 
+before_test_epoch:
+(NORMAL      ) IterTimerHook                      
+ -------------------- 
+before_test_iter:
+(NORMAL      ) IterTimerHook                      
+ -------------------- 
+after_test_iter:
+(NORMAL      ) IterTimerHook                      
+(NORMAL      ) SegVisualizationHook               
+(BELOW_NORMAL) LoggerHook                         
+ -------------------- 
+after_test_epoch:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(NORMAL      ) IterTimerHook                      
+(BELOW_NORMAL) LoggerHook                         
+ -------------------- 
+after_run:
+(BELOW_NORMAL) LoggerHook                         
+ -------------------- 
+2023/02/11 16:05:23 - mmengine - WARNING - The "loop" registry in mmseg did not set import location. Fallback to call `mmseg.utils.register_all_modules` instead.
+2023/02/11 16:05:23 - mmengine - WARNING - The "dataset" registry in mmseg did not set import location. Fallback to call `mmseg.utils.register_all_modules` instead.
+2023/02/11 16:05:23 - mmengine - WARNING - The "transform" registry in mmseg did not set import location. Fallback to call `mmseg.utils.register_all_modules` instead.
+2023/02/11 16:05:23 - mmengine - WARNING - The "data sampler" registry in mmseg did not set import location. Fallback to call `mmseg.utils.register_all_modules` instead.
+2023/02/11 16:05:25 - mmengine - WARNING - The "optimizer wrapper constructor" registry in mmseg did not set import location. Fallback to call `mmseg.utils.register_all_modules` instead.
+2023/02/11 16:05:25 - mmengine - WARNING - The "optimizer" registry in mmseg did not set import location. Fallback to call `mmseg.utils.register_all_modules` instead.
+2023/02/11 16:05:25 - mmengine - WARNING - The "optim_wrapper" registry in mmseg did not set import location. Fallback to call `mmseg.utils.register_all_modules` instead.
+2023/02/11 16:05:25 - mmengine - WARNING - The "parameter scheduler" registry in mmseg did not set import location. Fallback to call `mmseg.utils.register_all_modules` instead.
+2023/02/11 16:05:26 - mmengine - WARNING - The "metric" registry in mmseg did not set import location. Fallback to call `mmseg.utils.register_all_modules` instead.
+2023/02/11 16:05:27 - mmengine - WARNING - The "weight initializer" registry in mmseg did not set import location. Fallback to call `mmseg.utils.register_all_modules` instead.
+2023/02/11 16:05:27 - mmengine - INFO - load model from: C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth
+2023/02/11 16:05:27 - mmengine - INFO - Loads checkpoint by local backend from path: C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth
+Name of parameter - Initialization information
+
+backbone.layer0.conv.weight - torch.Size([16, 3, 3, 3]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer0.bn.weight - torch.Size([16]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer0.bn.bias - torch.Size([16]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer1.depthwise_conv.conv.weight - torch.Size([16, 1, 3, 3]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer1.depthwise_conv.bn.weight - torch.Size([16]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer1.depthwise_conv.bn.bias - torch.Size([16]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer1.linear_conv.conv.weight - torch.Size([16, 16, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer1.linear_conv.bn.weight - torch.Size([16]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer1.linear_conv.bn.bias - torch.Size([16]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer2.expand_conv.conv.weight - torch.Size([64, 16, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer2.expand_conv.bn.weight - torch.Size([64]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer2.expand_conv.bn.bias - torch.Size([64]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer2.depthwise_conv.conv.weight - torch.Size([64, 1, 3, 3]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer2.depthwise_conv.bn.weight - torch.Size([64]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer2.depthwise_conv.bn.bias - torch.Size([64]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer2.linear_conv.conv.weight - torch.Size([24, 64, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer2.linear_conv.bn.weight - torch.Size([24]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer2.linear_conv.bn.bias - torch.Size([24]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer3.expand_conv.conv.weight - torch.Size([72, 24, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer3.expand_conv.bn.weight - torch.Size([72]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer3.expand_conv.bn.bias - torch.Size([72]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer3.depthwise_conv.conv.weight - torch.Size([72, 1, 3, 3]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer3.depthwise_conv.bn.weight - torch.Size([72]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer3.depthwise_conv.bn.bias - torch.Size([72]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer3.linear_conv.conv.weight - torch.Size([24, 72, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer3.linear_conv.bn.weight - torch.Size([24]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer3.linear_conv.bn.bias - torch.Size([24]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer4.expand_conv.conv.weight - torch.Size([72, 24, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer4.expand_conv.bn.weight - torch.Size([72]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer4.expand_conv.bn.bias - torch.Size([72]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer4.depthwise_conv.conv.weight - torch.Size([72, 1, 5, 5]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer4.depthwise_conv.bn.weight - torch.Size([72]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer4.depthwise_conv.bn.bias - torch.Size([72]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer4.se.conv1.conv.weight - torch.Size([24, 72, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer4.se.conv1.conv.bias - torch.Size([24]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer4.se.conv2.conv.weight - torch.Size([72, 24, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer4.se.conv2.conv.bias - torch.Size([72]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer4.linear_conv.conv.weight - torch.Size([40, 72, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer4.linear_conv.bn.weight - torch.Size([40]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer4.linear_conv.bn.bias - torch.Size([40]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer5.expand_conv.conv.weight - torch.Size([120, 40, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer5.expand_conv.bn.weight - torch.Size([120]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer5.expand_conv.bn.bias - torch.Size([120]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer5.depthwise_conv.conv.weight - torch.Size([120, 1, 5, 5]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer5.depthwise_conv.bn.weight - torch.Size([120]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer5.depthwise_conv.bn.bias - torch.Size([120]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer5.se.conv1.conv.weight - torch.Size([32, 120, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer5.se.conv1.conv.bias - torch.Size([32]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer5.se.conv2.conv.weight - torch.Size([120, 32, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer5.se.conv2.conv.bias - torch.Size([120]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer5.linear_conv.conv.weight - torch.Size([40, 120, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer5.linear_conv.bn.weight - torch.Size([40]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer5.linear_conv.bn.bias - torch.Size([40]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer6.expand_conv.conv.weight - torch.Size([120, 40, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer6.expand_conv.bn.weight - torch.Size([120]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer6.expand_conv.bn.bias - torch.Size([120]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer6.depthwise_conv.conv.weight - torch.Size([120, 1, 5, 5]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer6.depthwise_conv.bn.weight - torch.Size([120]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer6.depthwise_conv.bn.bias - torch.Size([120]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer6.se.conv1.conv.weight - torch.Size([32, 120, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer6.se.conv1.conv.bias - torch.Size([32]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer6.se.conv2.conv.weight - torch.Size([120, 32, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer6.se.conv2.conv.bias - torch.Size([120]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer6.linear_conv.conv.weight - torch.Size([40, 120, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer6.linear_conv.bn.weight - torch.Size([40]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer6.linear_conv.bn.bias - torch.Size([40]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer7.expand_conv.conv.weight - torch.Size([240, 40, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer7.expand_conv.bn.weight - torch.Size([240]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer7.expand_conv.bn.bias - torch.Size([240]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer7.depthwise_conv.conv.weight - torch.Size([240, 1, 3, 3]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer7.depthwise_conv.bn.weight - torch.Size([240]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer7.depthwise_conv.bn.bias - torch.Size([240]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer7.linear_conv.conv.weight - torch.Size([80, 240, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer7.linear_conv.bn.weight - torch.Size([80]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer7.linear_conv.bn.bias - torch.Size([80]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer8.expand_conv.conv.weight - torch.Size([200, 80, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer8.expand_conv.bn.weight - torch.Size([200]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer8.expand_conv.bn.bias - torch.Size([200]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer8.depthwise_conv.conv.weight - torch.Size([200, 1, 3, 3]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer8.depthwise_conv.bn.weight - torch.Size([200]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer8.depthwise_conv.bn.bias - torch.Size([200]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer8.linear_conv.conv.weight - torch.Size([80, 200, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer8.linear_conv.bn.weight - torch.Size([80]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer8.linear_conv.bn.bias - torch.Size([80]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer9.expand_conv.conv.weight - torch.Size([184, 80, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer9.expand_conv.bn.weight - torch.Size([184]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer9.expand_conv.bn.bias - torch.Size([184]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer9.depthwise_conv.conv.weight - torch.Size([184, 1, 3, 3]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer9.depthwise_conv.bn.weight - torch.Size([184]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer9.depthwise_conv.bn.bias - torch.Size([184]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer9.linear_conv.conv.weight - torch.Size([80, 184, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer9.linear_conv.bn.weight - torch.Size([80]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer9.linear_conv.bn.bias - torch.Size([80]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer10.expand_conv.conv.weight - torch.Size([184, 80, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer10.expand_conv.bn.weight - torch.Size([184]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer10.expand_conv.bn.bias - torch.Size([184]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer10.depthwise_conv.conv.weight - torch.Size([184, 1, 3, 3]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer10.depthwise_conv.bn.weight - torch.Size([184]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer10.depthwise_conv.bn.bias - torch.Size([184]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer10.linear_conv.conv.weight - torch.Size([80, 184, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer10.linear_conv.bn.weight - torch.Size([80]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer10.linear_conv.bn.bias - torch.Size([80]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer11.expand_conv.conv.weight - torch.Size([480, 80, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer11.expand_conv.bn.weight - torch.Size([480]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer11.expand_conv.bn.bias - torch.Size([480]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer11.depthwise_conv.conv.weight - torch.Size([480, 1, 3, 3]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer11.depthwise_conv.bn.weight - torch.Size([480]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer11.depthwise_conv.bn.bias - torch.Size([480]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer11.se.conv1.conv.weight - torch.Size([120, 480, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer11.se.conv1.conv.bias - torch.Size([120]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer11.se.conv2.conv.weight - torch.Size([480, 120, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer11.se.conv2.conv.bias - torch.Size([480]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer11.linear_conv.conv.weight - torch.Size([112, 480, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer11.linear_conv.bn.weight - torch.Size([112]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer11.linear_conv.bn.bias - torch.Size([112]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer12.expand_conv.conv.weight - torch.Size([672, 112, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer12.expand_conv.bn.weight - torch.Size([672]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer12.expand_conv.bn.bias - torch.Size([672]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer12.depthwise_conv.conv.weight - torch.Size([672, 1, 3, 3]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer12.depthwise_conv.bn.weight - torch.Size([672]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer12.depthwise_conv.bn.bias - torch.Size([672]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer12.se.conv1.conv.weight - torch.Size([168, 672, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer12.se.conv1.conv.bias - torch.Size([168]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer12.se.conv2.conv.weight - torch.Size([672, 168, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer12.se.conv2.conv.bias - torch.Size([672]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer12.linear_conv.conv.weight - torch.Size([112, 672, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer12.linear_conv.bn.weight - torch.Size([112]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer12.linear_conv.bn.bias - torch.Size([112]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer13.expand_conv.conv.weight - torch.Size([672, 112, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer13.expand_conv.bn.weight - torch.Size([672]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer13.expand_conv.bn.bias - torch.Size([672]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer13.depthwise_conv.conv.weight - torch.Size([672, 1, 5, 5]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer13.depthwise_conv.bn.weight - torch.Size([672]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer13.depthwise_conv.bn.bias - torch.Size([672]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer13.se.conv1.conv.weight - torch.Size([168, 672, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer13.se.conv1.conv.bias - torch.Size([168]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer13.se.conv2.conv.weight - torch.Size([672, 168, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer13.se.conv2.conv.bias - torch.Size([672]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer13.linear_conv.conv.weight - torch.Size([160, 672, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer13.linear_conv.bn.weight - torch.Size([160]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer13.linear_conv.bn.bias - torch.Size([160]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer14.expand_conv.conv.weight - torch.Size([960, 160, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer14.expand_conv.bn.weight - torch.Size([960]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer14.expand_conv.bn.bias - torch.Size([960]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer14.depthwise_conv.conv.weight - torch.Size([960, 1, 5, 5]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer14.depthwise_conv.bn.weight - torch.Size([960]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer14.depthwise_conv.bn.bias - torch.Size([960]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer14.se.conv1.conv.weight - torch.Size([240, 960, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer14.se.conv1.conv.bias - torch.Size([240]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer14.se.conv2.conv.weight - torch.Size([960, 240, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer14.se.conv2.conv.bias - torch.Size([960]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer14.linear_conv.conv.weight - torch.Size([160, 960, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer14.linear_conv.bn.weight - torch.Size([160]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer14.linear_conv.bn.bias - torch.Size([160]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer15.expand_conv.conv.weight - torch.Size([960, 160, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer15.expand_conv.bn.weight - torch.Size([960]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer15.expand_conv.bn.bias - torch.Size([960]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer15.depthwise_conv.conv.weight - torch.Size([960, 1, 5, 5]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer15.depthwise_conv.bn.weight - torch.Size([960]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer15.depthwise_conv.bn.bias - torch.Size([960]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer15.se.conv1.conv.weight - torch.Size([240, 960, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer15.se.conv1.conv.bias - torch.Size([240]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer15.se.conv2.conv.weight - torch.Size([960, 240, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer15.se.conv2.conv.bias - torch.Size([960]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer15.linear_conv.conv.weight - torch.Size([160, 960, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer15.linear_conv.bn.weight - torch.Size([160]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer15.linear_conv.bn.bias - torch.Size([160]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer16.conv.weight - torch.Size([960, 160, 1, 1]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer16.bn.weight - torch.Size([960]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+backbone.layer16.bn.bias - torch.Size([960]): 
+PretrainedInit: load from C:\Users\大熊SsSsSs\.cache\torch\hub\checkpoints\mobilenet_v3_large-bc2c3fd3.pth 
+
+decode_head.conv_seg.weight - torch.Size([2, 128, 1, 1]): 
+NormalInit: mean=0, std=0.01, bias=0 
+
+decode_head.conv_seg.bias - torch.Size([2]): 
+NormalInit: mean=0, std=0.01, bias=0 
+
+decode_head.convs.conv0.weight - torch.Size([32, 16, 1, 1]): 
+The value is the same before and after calling `init_weights` of EncoderDecoder  
+
+decode_head.convs.conv1.weight - torch.Size([64, 24, 1, 1]): 
+The value is the same before and after calling `init_weights` of EncoderDecoder  
+
+decode_head.conv_ups.conv_up0.conv.weight - torch.Size([128, 160, 1, 1]): 
+The value is the same before and after calling `init_weights` of EncoderDecoder  
+
+decode_head.conv_ups.conv_up0.bn.weight - torch.Size([128]): 
+The value is the same before and after calling `init_weights` of EncoderDecoder  
+
+decode_head.conv_ups.conv_up0.bn.bias - torch.Size([128]): 
+The value is the same before and after calling `init_weights` of EncoderDecoder  
+
+decode_head.conv_ups.conv_up1.conv.weight - torch.Size([128, 192, 1, 1]): 
+The value is the same before and after calling `init_weights` of EncoderDecoder  
+
+decode_head.conv_ups.conv_up1.bn.weight - torch.Size([128]): 
+The value is the same before and after calling `init_weights` of EncoderDecoder  
+
+decode_head.conv_ups.conv_up1.bn.bias - torch.Size([128]): 
+The value is the same before and after calling `init_weights` of EncoderDecoder  
+
+decode_head.conv_up_input.weight - torch.Size([128, 128, 1, 1]): 
+The value is the same before and after calling `init_weights` of EncoderDecoder  
+
+decode_head.conv_up_input.bias - torch.Size([128]): 
+The value is the same before and after calling `init_weights` of EncoderDecoder  
+
+decode_head.aspp_conv.conv.weight - torch.Size([128, 960, 1, 1]): 
+Initialized by user-defined `init_weights` in ConvModule  
+
+decode_head.aspp_conv.bn.weight - torch.Size([128]): 
+The value is the same before and after calling `init_weights` of EncoderDecoder  
+
+decode_head.aspp_conv.bn.bias - torch.Size([128]): 
+The value is the same before and after calling `init_weights` of EncoderDecoder  
+
+decode_head.image_pool.1.conv.weight - torch.Size([128, 960, 1, 1]): 
+The value is the same before and after calling `init_weights` of EncoderDecoder  
+2023/02/11 16:05:27 - mmengine - INFO - Load checkpoint from E:\mmsegmentation\lraspp_m-v3-d8_512x1024_320k_cityscapes_20201224_220337-cfe8fb07.pth
+2023/02/11 16:05:27 - mmengine - INFO - Checkpoints will be saved to E:\mmsegmentation\tools\work_dirs\mobilenet-v3-d8_lraspp_1xb4-2k_glomeruli-256x256.
+2023/02/11 16:05:51 - mmengine - INFO - Iter(train) [  100/16000]  lr: 9.9945e-03  eta: 1:04:38  time: 0.2210  data_time: 0.0032  memory: 3839  loss: 0.0903  decode.loss_ce: 0.0903  decode.acc_seg: 94.0433
+2023/02/11 16:06:13 - mmengine - INFO - Iter(train) [  200/16000]  lr: 9.9889e-03  eta: 1:01:14  time: 0.2208  data_time: 0.0029  memory: 3322  loss: 0.0544  decode.loss_ce: 0.0544  decode.acc_seg: 100.0000
+2023/02/11 16:06:35 - mmengine - INFO - Iter(train) [  300/16000]  lr: 9.9833e-03  eta: 0:59:51  time: 0.2204  data_time: 0.0026  memory: 3321  loss: 0.0705  decode.loss_ce: 0.0705  decode.acc_seg: 98.7768
+2023/02/11 16:06:58 - mmengine - INFO - Iter(train) [  400/16000]  lr: 9.9778e-03  eta: 0:59:03  time: 0.2211  data_time: 0.0026  memory: 3321  loss: 0.0744  decode.loss_ce: 0.0744  decode.acc_seg: 100.0000
+2023/02/11 16:07:20 - mmengine - INFO - Iter(train) [  500/16000]  lr: 9.9722e-03  eta: 0:58:25  time: 0.2229  data_time: 0.0033  memory: 3321  loss: 0.0636  decode.loss_ce: 0.0636  decode.acc_seg: 98.8739
+2023/02/11 16:07:23 - mmengine - INFO - Exp name: mobilenet-v3-d8_lraspp_1xb4-2k_glomeruli-256x256_20230211_160514
+2023/02/11 16:07:42 - mmengine - INFO - Iter(train) [  600/16000]  lr: 9.9666e-03  eta: 0:57:53  time: 0.2225  data_time: 0.0025  memory: 3321  loss: 0.0753  decode.loss_ce: 0.0753  decode.acc_seg: 100.0000
+2023/02/11 16:08:04 - mmengine - INFO - Iter(train) [  700/16000]  lr: 9.9611e-03  eta: 0:57:23  time: 0.2222  data_time: 0.0030  memory: 3321  loss: 0.0621  decode.loss_ce: 0.0621  decode.acc_seg: 100.0000
+2023/02/11 16:08:27 - mmengine - INFO - Iter(train) [  800/16000]  lr: 9.9555e-03  eta: 0:56:56  time: 0.2231  data_time: 0.0029  memory: 3321  loss: 0.0673  decode.loss_ce: 0.0673  decode.acc_seg: 99.0162
+2023/02/11 16:08:49 - mmengine - INFO - Iter(train) [  900/16000]  lr: 9.9499e-03  eta: 0:56:30  time: 0.2221  data_time: 0.0029  memory: 3321  loss: 0.0365  decode.loss_ce: 0.0365  decode.acc_seg: 100.0000
+2023/02/11 16:09:11 - mmengine - INFO - Exp name: mobilenet-v3-d8_lraspp_1xb4-2k_glomeruli-256x256_20230211_160514
+2023/02/11 16:09:11 - mmengine - INFO - Iter(train) [ 1000/16000]  lr: 9.9444e-03  eta: 0:56:05  time: 0.2222  data_time: 0.0027  memory: 3321  loss: 0.0586  decode.loss_ce: 0.0586  decode.acc_seg: 100.0000
+2023/02/11 16:09:33 - mmengine - INFO - Iter(train) [ 1100/16000]  lr: 9.9388e-03  eta: 0:55:41  time: 0.2231  data_time: 0.0031  memory: 3321  loss: 0.0269  decode.loss_ce: 0.0269  decode.acc_seg: 100.0000
+2023/02/11 16:09:56 - mmengine - INFO - Iter(train) [ 1200/16000]  lr: 9.9332e-03  eta: 0:55:17  time: 0.2230  data_time: 0.0027  memory: 3321  loss: 0.0435  decode.loss_ce: 0.0435  decode.acc_seg: 95.1687
+2023/02/11 16:10:18 - mmengine - INFO - Iter(train) [ 1300/16000]  lr: 9.9276e-03  eta: 0:54:53  time: 0.2221  data_time: 0.0025  memory: 3322  loss: 0.0483  decode.loss_ce: 0.0483  decode.acc_seg: 97.4683
+2023/02/11 16:10:40 - mmengine - INFO - Iter(train) [ 1400/16000]  lr: 9.9221e-03  eta: 0:54:29  time: 0.2226  data_time: 0.0029  memory: 3321  loss: 0.0929  decode.loss_ce: 0.0929  decode.acc_seg: 99.3752
+2023/02/11 16:11:03 - mmengine - INFO - Iter(train) [ 1500/16000]  lr: 9.9165e-03  eta: 0:54:06  time: 0.2227  data_time: 0.0028  memory: 3321  loss: 0.0164  decode.loss_ce: 0.0164  decode.acc_seg: 100.0000
+2023/02/11 16:11:25 - mmengine - INFO - Iter(train) [ 1600/16000]  lr: 9.9109e-03  eta: 0:53:43  time: 0.2228  data_time: 0.0032  memory: 3322  loss: 0.0253  decode.loss_ce: 0.0253  decode.acc_seg: 95.1755
+2023/02/11 16:11:25 - mmengine - INFO - Saving checkpoint at 1600 iterations
+2023/02/11 16:11:31 - mmengine - INFO - Iter(val) [100/515]    eta: 0:00:21  time: 0.0309  data_time: 0.0035  memory: 3234  
+2023/02/11 16:11:35 - mmengine - INFO - Iter(val) [200/515]    eta: 0:00:13  time: 0.0308  data_time: 0.0034  memory: 173  
+2023/02/11 16:11:38 - mmengine - INFO - Iter(val) [300/515]    eta: 0:00:08  time: 0.0348  data_time: 0.0082  memory: 173  
+2023/02/11 16:11:41 - mmengine - INFO - Iter(val) [400/515]    eta: 0:00:04  time: 0.0337  data_time: 0.0067  memory: 173  
+2023/02/11 16:11:44 - mmengine - INFO - Iter(val) [500/515]    eta: 0:00:00  time: 0.0349  data_time: 0.0082  memory: 173  
+2023/02/11 16:11:45 - mmengine - INFO - per class results:
+2023/02/11 16:11:45 - mmengine - INFO - 
++------------+------+-------+
+|   Class    | IoU  |  Acc  |
++------------+------+-------+
+| background | 98.1 | 100.0 |
+| glomeruili | 0.0  |  0.0  |
++------------+------+-------+
+2023/02/11 16:11:45 - mmengine - INFO - Iter(val) [515/515]  aAcc: 98.1000  mIoU: 49.0500  mAcc: 50.0000
+2023/02/11 16:12:07 - mmengine - INFO - Iter(train) [ 1700/16000]  lr: 9.9053e-03  eta: 0:53:20  time: 0.2231  data_time: 0.0027  memory: 3320  loss: 0.0350  decode.loss_ce: 0.0350  decode.acc_seg: 100.0000
+2023/02/11 16:12:29 - mmengine - INFO - Iter(train) [ 1800/16000]  lr: 9.8998e-03  eta: 0:52:57  time: 0.2233  data_time: 0.0026  memory: 3321  loss: 0.0552  decode.loss_ce: 0.0552  decode.acc_seg: 89.5491
+2023/02/11 16:12:52 - mmengine - INFO - Iter(train) [ 1900/16000]  lr: 9.8942e-03  eta: 0:52:34  time: 0.2226  data_time: 0.0026  memory: 3319  loss: 0.0452  decode.loss_ce: 0.0452  decode.acc_seg: 100.0000
+2023/02/11 16:13:14 - mmengine - INFO - Exp name: mobilenet-v3-d8_lraspp_1xb4-2k_glomeruli-256x256_20230211_160514
+2023/02/11 16:13:14 - mmengine - INFO - Iter(train) [ 2000/16000]  lr: 9.8886e-03  eta: 0:52:11  time: 0.2229  data_time: 0.0030  memory: 3320  loss: 0.0378  decode.loss_ce: 0.0378  decode.acc_seg: 92.4647
+2023/02/11 16:13:36 - mmengine - INFO - Iter(train) [ 2100/16000]  lr: 9.8830e-03  eta: 0:51:48  time: 0.2231  data_time: 0.0029  memory: 3320  loss: 0.1023  decode.loss_ce: 0.1023  decode.acc_seg: 100.0000
+2023/02/11 16:13:59 - mmengine - INFO - Iter(train) [ 2200/16000]  lr: 9.8775e-03  eta: 0:51:25  time: 0.2231  data_time: 0.0031  memory: 3319  loss: 0.0453  decode.loss_ce: 0.0453  decode.acc_seg: 100.0000
+2023/02/11 16:14:21 - mmengine - INFO - Iter(train) [ 2300/16000]  lr: 9.8719e-03  eta: 0:51:02  time: 0.2228  data_time: 0.0028  memory: 3319  loss: 0.1138  decode.loss_ce: 0.1138  decode.acc_seg: 84.4925
+2023/02/11 16:14:43 - mmengine - INFO - Iter(train) [ 2400/16000]  lr: 9.8663e-03  eta: 0:50:39  time: 0.2229  data_time: 0.0032  memory: 3320  loss: 0.0397  decode.loss_ce: 0.0397  decode.acc_seg: 100.0000
+2023/02/11 16:15:05 - mmengine - INFO - Iter(train) [ 2500/16000]  lr: 9.8607e-03  eta: 0:50:17  time: 0.2228  data_time: 0.0028  memory: 3320  loss: 0.0314  decode.loss_ce: 0.0314  decode.acc_seg: 100.0000
+2023/02/11 16:15:28 - mmengine - INFO - Iter(train) [ 2600/16000]  lr: 9.8551e-03  eta: 0:49:55  time: 0.2251  data_time: 0.0031  memory: 3320  loss: 0.1059  decode.loss_ce: 0.1059  decode.acc_seg: 100.0000
+2023/02/11 16:15:50 - mmengine - INFO - Iter(train) [ 2700/16000]  lr: 9.8496e-03  eta: 0:49:32  time: 0.2241  data_time: 0.0030  memory: 3319  loss: 0.0248  decode.loss_ce: 0.0248  decode.acc_seg: 100.0000
+2023/02/11 16:16:12 - mmengine - INFO - Iter(train) [ 2800/16000]  lr: 9.8440e-03  eta: 0:49:09  time: 0.2227  data_time: 0.0026  memory: 3319  loss: 0.0599  decode.loss_ce: 0.0599  decode.acc_seg: 97.4302
+2023/02/11 16:16:35 - mmengine - INFO - Iter(train) [ 2900/16000]  lr: 9.8384e-03  eta: 0:48:47  time: 0.2230  data_time: 0.0029  memory: 3319  loss: 0.0570  decode.loss_ce: 0.0570  decode.acc_seg: 99.0100
+2023/02/11 16:16:57 - mmengine - INFO - Exp name: mobilenet-v3-d8_lraspp_1xb4-2k_glomeruli-256x256_20230211_160514
+2023/02/11 16:16:57 - mmengine - INFO - Iter(train) [ 3000/16000]  lr: 9.8328e-03  eta: 0:48:24  time: 0.2236  data_time: 0.0029  memory: 3320  loss: 0.0120  decode.loss_ce: 0.0120  decode.acc_seg: 98.1386
+2023/02/11 16:17:19 - mmengine - INFO - Iter(train) [ 3100/16000]  lr: 9.8273e-03  eta: 0:48:02  time: 0.2229  data_time: 0.0030  memory: 3321  loss: 0.0207  decode.loss_ce: 0.0207  decode.acc_seg: 100.0000
+2023/02/11 16:17:42 - mmengine - INFO - Iter(train) [ 3200/16000]  lr: 9.8217e-03  eta: 0:47:39  time: 0.2230  data_time: 0.0028  memory: 3319  loss: 0.0492  decode.loss_ce: 0.0492  decode.acc_seg: 100.0000
+2023/02/11 16:17:42 - mmengine - INFO - Saving checkpoint at 3200 iterations
+2023/02/11 16:17:46 - mmengine - INFO - Iter(val) [100/515]    eta: 0:00:14  time: 0.0316  data_time: 0.0045  memory: 173  
+2023/02/11 16:17:50 - mmengine - INFO - Iter(val) [200/515]    eta: 0:00:10  time: 0.0336  data_time: 0.0056  memory: 173  
+2023/02/11 16:17:53 - mmengine - INFO - Iter(val) [300/515]    eta: 0:00:07  time: 0.0372  data_time: 0.0095  memory: 173  
+2023/02/11 16:17:56 - mmengine - INFO - Iter(val) [400/515]    eta: 0:00:03  time: 0.0355  data_time: 0.0064  memory: 173  
+2023/02/11 16:18:00 - mmengine - INFO - Iter(val) [500/515]    eta: 0:00:00  time: 0.0358  data_time: 0.0074  memory: 173  
+2023/02/11 16:18:00 - mmengine - INFO - per class results:
+2023/02/11 16:18:00 - mmengine - INFO - 
++------------+-------+-------+
+|   Class    |  IoU  |  Acc  |
++------------+-------+-------+
+| background | 98.04 | 99.04 |
+| glomeruili | 31.81 |  47.6 |
++------------+-------+-------+
+2023/02/11 16:18:00 - mmengine - INFO - Iter(val) [515/515]  aAcc: 98.0600  mIoU: 64.9300  mAcc: 73.3200
+2023/02/11 16:18:23 - mmengine - INFO - Iter(train) [ 3300/16000]  lr: 9.8161e-03  eta: 0:47:17  time: 0.2226  data_time: 0.0029  memory: 3320  loss: 0.0460  decode.loss_ce: 0.0460  decode.acc_seg: 100.0000
+2023/02/11 16:18:45 - mmengine - INFO - Iter(train) [ 3400/16000]  lr: 9.8105e-03  eta: 0:46:54  time: 0.2230  data_time: 0.0027  memory: 3319  loss: 0.0877  decode.loss_ce: 0.0877  decode.acc_seg: 99.9494
+2023/02/11 16:19:07 - mmengine - INFO - Iter(train) [ 3500/16000]  lr: 9.8049e-03  eta: 0:46:32  time: 0.2249  data_time: 0.0030  memory: 3320  loss: 0.0714  decode.loss_ce: 0.0714  decode.acc_seg: 93.7773
+2023/02/11 16:19:30 - mmengine - INFO - Iter(train) [ 3600/16000]  lr: 9.7994e-03  eta: 0:46:10  time: 0.2229  data_time: 0.0026  memory: 3320  loss: 0.0332  decode.loss_ce: 0.0332  decode.acc_seg: 100.0000
+2023/02/11 16:19:52 - mmengine - INFO - Iter(train) [ 3700/16000]  lr: 9.7938e-03  eta: 0:45:47  time: 0.2228  data_time: 0.0029  memory: 3319  loss: 0.0475  decode.loss_ce: 0.0475  decode.acc_seg: 98.7299
+2023/02/11 16:20:14 - mmengine - INFO - Iter(train) [ 3800/16000]  lr: 9.7882e-03  eta: 0:45:25  time: 0.2228  data_time: 0.0032  memory: 3319  loss: 0.0810  decode.loss_ce: 0.0810  decode.acc_seg: 97.0515
+2023/02/11 16:20:37 - mmengine - INFO - Iter(train) [ 3900/16000]  lr: 9.7826e-03  eta: 0:45:02  time: 0.2227  data_time: 0.0027  memory: 3319  loss: 0.0384  decode.loss_ce: 0.0384  decode.acc_seg: 99.0980
+2023/02/11 16:20:59 - mmengine - INFO - Exp name: mobilenet-v3-d8_lraspp_1xb4-2k_glomeruli-256x256_20230211_160514
+2023/02/11 16:20:59 - mmengine - INFO - Iter(train) [ 4000/16000]  lr: 9.7770e-03  eta: 0:44:40  time: 0.2226  data_time: 0.0032  memory: 3319  loss: 0.0496  decode.loss_ce: 0.0496  decode.acc_seg: 91.6704
+2023/02/11 16:21:21 - mmengine - INFO - Iter(train) [ 4100/16000]  lr: 9.7714e-03  eta: 0:44:17  time: 0.2227  data_time: 0.0029  memory: 3320  loss: 0.0327  decode.loss_ce: 0.0327  decode.acc_seg: 98.8154
+2023/02/11 16:21:44 - mmengine - INFO - Iter(train) [ 4200/16000]  lr: 9.7659e-03  eta: 0:43:56  time: 0.2254  data_time: 0.0037  memory: 3320  loss: 0.0985  decode.loss_ce: 0.0985  decode.acc_seg: 99.3221
+2023/02/11 16:22:06 - mmengine - INFO - Iter(train) [ 4300/16000]  lr: 9.7603e-03  eta: 0:43:34  time: 0.2256  data_time: 0.0031  memory: 3319  loss: 0.0339  decode.loss_ce: 0.0339  decode.acc_seg: 100.0000
+2023/02/11 16:22:29 - mmengine - INFO - Iter(train) [ 4400/16000]  lr: 9.7547e-03  eta: 0:43:12  time: 0.2282  data_time: 0.0035  memory: 3319  loss: 0.0525  decode.loss_ce: 0.0525  decode.acc_seg: 88.8288
+2023/02/11 16:22:52 - mmengine - INFO - Iter(train) [ 4500/16000]  lr: 9.7491e-03  eta: 0:42:51  time: 0.2262  data_time: 0.0035  memory: 3319  loss: 0.0223  decode.loss_ce: 0.0223  decode.acc_seg: 98.6013
+2023/02/11 16:23:14 - mmengine - INFO - Iter(train) [ 4600/16000]  lr: 9.7435e-03  eta: 0:42:30  time: 0.2287  data_time: 0.0033  memory: 3319  loss: 0.0265  decode.loss_ce: 0.0265  decode.acc_seg: 98.7551
+2023/02/11 16:23:37 - mmengine - INFO - Iter(train) [ 4700/16000]  lr: 9.7379e-03  eta: 0:42:08  time: 0.2248  data_time: 0.0029  memory: 3320  loss: 0.0165  decode.loss_ce: 0.0165  decode.acc_seg: 100.0000
+2023/02/11 16:23:59 - mmengine - INFO - Iter(train) [ 4800/16000]  lr: 9.7323e-03  eta: 0:41:45  time: 0.2233  data_time: 0.0030  memory: 3319  loss: 0.0514  decode.loss_ce: 0.0514  decode.acc_seg: 99.6872
+2023/02/11 16:23:59 - mmengine - INFO - Saving checkpoint at 4800 iterations
+2023/02/11 16:24:04 - mmengine - INFO - Iter(val) [100/515]    eta: 0:00:14  time: 0.0312  data_time: 0.0034  memory: 173  
+2023/02/11 16:24:07 - mmengine - INFO - Iter(val) [200/515]    eta: 0:00:10  time: 0.0316  data_time: 0.0036  memory: 173  
+2023/02/11 16:24:11 - mmengine - INFO - Iter(val) [300/515]    eta: 0:00:07  time: 0.0391  data_time: 0.0086  memory: 173  
+2023/02/11 16:24:14 - mmengine - INFO - Iter(val) [400/515]    eta: 0:00:03  time: 0.0361  data_time: 0.0083  memory: 173  
+2023/02/11 16:24:18 - mmengine - INFO - Iter(val) [500/515]    eta: 0:00:00  time: 0.0389  data_time: 0.0092  memory: 173  
+2023/02/11 16:24:19 - mmengine - INFO - per class results:
+2023/02/11 16:24:19 - mmengine - INFO - 
++------------+-------+-------+
+|   Class    |  IoU  |  Acc  |
++------------+-------+-------+
+| background | 98.39 | 99.08 |
+| glomeruili | 43.23 | 63.79 |
++------------+-------+-------+
+2023/02/11 16:24:19 - mmengine - INFO - Iter(val) [515/515]  aAcc: 98.4100  mIoU: 70.8100  mAcc: 81.4300
+2023/02/11 16:24:41 - mmengine - INFO - Iter(train) [ 4900/16000]  lr: 9.7268e-03  eta: 0:41:24  time: 0.2239  data_time: 0.0027  memory: 3319  loss: 0.0392  decode.loss_ce: 0.0392  decode.acc_seg: 98.0957
+2023/02/11 16:25:04 - mmengine - INFO - Exp name: mobilenet-v3-d8_lraspp_1xb4-2k_glomeruli-256x256_20230211_160514
+2023/02/11 16:25:04 - mmengine - INFO - Iter(train) [ 5000/16000]  lr: 9.7212e-03  eta: 0:41:01  time: 0.2259  data_time: 0.0033  memory: 3319  loss: 0.0182  decode.loss_ce: 0.0182  decode.acc_seg: 96.3453
+2023/02/11 16:25:26 - mmengine - INFO - Iter(train) [ 5100/16000]  lr: 9.7156e-03  eta: 0:40:39  time: 0.2250  data_time: 0.0031  memory: 3319  loss: 0.0435  decode.loss_ce: 0.0435  decode.acc_seg: 100.0000
+2023/02/11 16:25:49 - mmengine - INFO - Iter(train) [ 5200/16000]  lr: 9.7100e-03  eta: 0:40:17  time: 0.2254  data_time: 0.0029  memory: 3320  loss: 0.0706  decode.loss_ce: 0.0706  decode.acc_seg: 96.7028
+2023/02/11 16:26:11 - mmengine - INFO - Iter(train) [ 5300/16000]  lr: 9.7044e-03  eta: 0:39:55  time: 0.2247  data_time: 0.0031  memory: 3320  loss: 0.0435  decode.loss_ce: 0.0435  decode.acc_seg: 99.3665
+2023/02/11 16:26:34 - mmengine - INFO - Iter(train) [ 5400/16000]  lr: 9.6988e-03  eta: 0:39:33  time: 0.2248  data_time: 0.0033  memory: 3319  loss: 0.0614  decode.loss_ce: 0.0614  decode.acc_seg: 100.0000
+2023/02/11 16:26:56 - mmengine - INFO - Iter(train) [ 5500/16000]  lr: 9.6932e-03  eta: 0:39:11  time: 0.2239  data_time: 0.0029  memory: 3320  loss: 0.0200  decode.loss_ce: 0.0200  decode.acc_seg: 97.4706
+2023/02/11 16:27:19 - mmengine - INFO - Iter(train) [ 5600/16000]  lr: 9.6877e-03  eta: 0:38:49  time: 0.2243  data_time: 0.0029  memory: 3319  loss: 0.0192  decode.loss_ce: 0.0192  decode.acc_seg: 99.8497
+2023/02/11 16:27:41 - mmengine - INFO - Iter(train) [ 5700/16000]  lr: 9.6821e-03  eta: 0:38:26  time: 0.2246  data_time: 0.0032  memory: 3319  loss: 0.0600  decode.loss_ce: 0.0600  decode.acc_seg: 99.0374
+2023/02/11 16:28:04 - mmengine - INFO - Iter(train) [ 5800/16000]  lr: 9.6765e-03  eta: 0:38:04  time: 0.2258  data_time: 0.0031  memory: 3320  loss: 0.0319  decode.loss_ce: 0.0319  decode.acc_seg: 94.3896
+2023/02/11 16:28:26 - mmengine - INFO - Iter(train) [ 5900/16000]  lr: 9.6709e-03  eta: 0:37:42  time: 0.2239  data_time: 0.0028  memory: 3319  loss: 0.0448  decode.loss_ce: 0.0448  decode.acc_seg: 91.0810
+2023/02/11 16:28:49 - mmengine - INFO - Exp name: mobilenet-v3-d8_lraspp_1xb4-2k_glomeruli-256x256_20230211_160514
+2023/02/11 16:28:49 - mmengine - INFO - Iter(train) [ 6000/16000]  lr: 9.6653e-03  eta: 0:37:19  time: 0.2242  data_time: 0.0034  memory: 3319  loss: 0.0215  decode.loss_ce: 0.0215  decode.acc_seg: 100.0000
+2023/02/11 16:29:11 - mmengine - INFO - Iter(train) [ 6100/16000]  lr: 9.6597e-03  eta: 0:36:57  time: 0.2245  data_time: 0.0032  memory: 3320  loss: 0.0182  decode.loss_ce: 0.0182  decode.acc_seg: 100.0000
+2023/02/11 16:29:33 - mmengine - INFO - Iter(train) [ 6200/16000]  lr: 9.6541e-03  eta: 0:36:35  time: 0.2247  data_time: 0.0030  memory: 3319  loss: 0.0577  decode.loss_ce: 0.0577  decode.acc_seg: 99.8948
+2023/02/11 16:29:56 - mmengine - INFO - Iter(train) [ 6300/16000]  lr: 9.6485e-03  eta: 0:36:12  time: 0.2230  data_time: 0.0028  memory: 3320  loss: 0.0425  decode.loss_ce: 0.0425  decode.acc_seg: 99.2680
+2023/02/11 16:30:18 - mmengine - INFO - Iter(train) [ 6400/16000]  lr: 9.6429e-03  eta: 0:35:50  time: 0.2250  data_time: 0.0032  memory: 3321  loss: 0.0384  decode.loss_ce: 0.0384  decode.acc_seg: 100.0000
+2023/02/11 16:30:18 - mmengine - INFO - Saving checkpoint at 6400 iterations
+2023/02/11 16:30:23 - mmengine - INFO - Iter(val) [100/515]    eta: 0:00:13  time: 0.0307  data_time: 0.0029  memory: 173  
+2023/02/11 16:30:26 - mmengine - INFO - Iter(val) [200/515]    eta: 0:00:10  time: 0.0316  data_time: 0.0034  memory: 173  
+2023/02/11 16:30:30 - mmengine - INFO - Iter(val) [300/515]    eta: 0:00:07  time: 0.0374  data_time: 0.0097  memory: 173  
+2023/02/11 16:30:33 - mmengine - INFO - Iter(val) [400/515]    eta: 0:00:03  time: 0.0363  data_time: 0.0097  memory: 173  
+2023/02/11 16:30:37 - mmengine - INFO - Iter(val) [500/515]    eta: 0:00:00  time: 0.0380  data_time: 0.0101  memory: 173  
+2023/02/11 16:30:38 - mmengine - INFO - per class results:
+2023/02/11 16:30:38 - mmengine - INFO - 
++------------+-------+-------+
+|   Class    |  IoU  |  Acc  |
++------------+-------+-------+
+| background | 98.03 | 98.47 |
+| glomeruili | 42.93 | 76.78 |
++------------+-------+-------+
+2023/02/11 16:30:38 - mmengine - INFO - Iter(val) [515/515]  aAcc: 98.0600  mIoU: 70.4800  mAcc: 87.6300
+2023/02/11 16:31:00 - mmengine - INFO - Iter(train) [ 6500/16000]  lr: 9.6373e-03  eta: 0:35:28  time: 0.2228  data_time: 0.0027  memory: 3319  loss: 0.0468  decode.loss_ce: 0.0468  decode.acc_seg: 99.5447
+2023/02/11 16:31:22 - mmengine - INFO - Iter(train) [ 6600/16000]  lr: 9.6317e-03  eta: 0:35:05  time: 0.2240  data_time: 0.0031  memory: 3319  loss: 0.0436  decode.loss_ce: 0.0436  decode.acc_seg: 99.6897
+2023/02/11 16:31:45 - mmengine - INFO - Iter(train) [ 6700/16000]  lr: 9.6262e-03  eta: 0:34:43  time: 0.2233  data_time: 0.0027  memory: 3321  loss: 0.0374  decode.loss_ce: 0.0374  decode.acc_seg: 100.0000
+2023/02/11 16:32:07 - mmengine - INFO - Iter(train) [ 6800/16000]  lr: 9.6206e-03  eta: 0:34:20  time: 0.2241  data_time: 0.0028  memory: 3319  loss: 0.0533  decode.loss_ce: 0.0533  decode.acc_seg: 96.0800
+2023/02/11 16:32:30 - mmengine - INFO - Iter(train) [ 6900/16000]  lr: 9.6150e-03  eta: 0:33:58  time: 0.2236  data_time: 0.0030  memory: 3319  loss: 0.0195  decode.loss_ce: 0.0195  decode.acc_seg: 97.4511
+2023/02/11 16:32:52 - mmengine - INFO - Exp name: mobilenet-v3-d8_lraspp_1xb4-2k_glomeruli-256x256_20230211_160514
+2023/02/11 16:32:52 - mmengine - INFO - Iter(train) [ 7000/16000]  lr: 9.6094e-03  eta: 0:33:36  time: 0.2243  data_time: 0.0026  memory: 3319  loss: 0.0230  decode.loss_ce: 0.0230  decode.acc_seg: 99.8621
+2023/02/11 16:33:14 - mmengine - INFO - Iter(train) [ 7100/16000]  lr: 9.6038e-03  eta: 0:33:13  time: 0.2248  data_time: 0.0030  memory: 3319  loss: 0.0646  decode.loss_ce: 0.0646  decode.acc_seg: 90.6632
+2023/02/11 16:33:37 - mmengine - INFO - Iter(train) [ 7200/16000]  lr: 9.5982e-03  eta: 0:32:51  time: 0.2231  data_time: 0.0030  memory: 3319  loss: 0.0228  decode.loss_ce: 0.0228  decode.acc_seg: 100.0000
+2023/02/11 16:33:59 - mmengine - INFO - Iter(train) [ 7300/16000]  lr: 9.5926e-03  eta: 0:32:28  time: 0.2244  data_time: 0.0031  memory: 3320  loss: 0.0154  decode.loss_ce: 0.0154  decode.acc_seg: 100.0000
+2023/02/11 16:34:22 - mmengine - INFO - Iter(train) [ 7400/16000]  lr: 9.5870e-03  eta: 0:32:06  time: 0.2236  data_time: 0.0027  memory: 3321  loss: 0.0150  decode.loss_ce: 0.0150  decode.acc_seg: 100.0000
+2023/02/11 16:34:44 - mmengine - INFO - Iter(train) [ 7500/16000]  lr: 9.5814e-03  eta: 0:31:43  time: 0.2243  data_time: 0.0030  memory: 3319  loss: 0.0251  decode.loss_ce: 0.0251  decode.acc_seg: 100.0000
+2023/02/11 16:35:06 - mmengine - INFO - Iter(train) [ 7600/16000]  lr: 9.5758e-03  eta: 0:31:21  time: 0.2228  data_time: 0.0028  memory: 3319  loss: 0.0805  decode.loss_ce: 0.0805  decode.acc_seg: 93.4525
+2023/02/11 16:35:29 - mmengine - INFO - Iter(train) [ 7700/16000]  lr: 9.5702e-03  eta: 0:30:59  time: 0.2243  data_time: 0.0028  memory: 3319  loss: 0.0461  decode.loss_ce: 0.0461  decode.acc_seg: 100.0000
+2023/02/11 16:35:51 - mmengine - INFO - Iter(train) [ 7800/16000]  lr: 9.5646e-03  eta: 0:30:36  time: 0.2244  data_time: 0.0030  memory: 3319  loss: 0.0156  decode.loss_ce: 0.0156  decode.acc_seg: 96.2031
+2023/02/11 16:36:13 - mmengine - INFO - Iter(train) [ 7900/16000]  lr: 9.5590e-03  eta: 0:30:14  time: 0.2235  data_time: 0.0032  memory: 3320  loss: 0.0541  decode.loss_ce: 0.0541  decode.acc_seg: 99.1579
+2023/02/11 16:36:36 - mmengine - INFO - Exp name: mobilenet-v3-d8_lraspp_1xb4-2k_glomeruli-256x256_20230211_160514
+2023/02/11 16:36:36 - mmengine - INFO - Iter(train) [ 8000/16000]  lr: 9.5534e-03  eta: 0:29:51  time: 0.2238  data_time: 0.0032  memory: 3320  loss: 0.0307  decode.loss_ce: 0.0307  decode.acc_seg: 98.7064
+2023/02/11 16:36:36 - mmengine - INFO - Saving checkpoint at 8000 iterations
+2023/02/11 16:36:40 - mmengine - INFO - Iter(val) [100/515]    eta: 0:00:13  time: 0.0309  data_time: 0.0038  memory: 173  
+2023/02/11 16:36:44 - mmengine - INFO - Iter(val) [200/515]    eta: 0:00:10  time: 0.0307  data_time: 0.0030  memory: 173  
+2023/02/11 16:36:47 - mmengine - INFO - Iter(val) [300/515]    eta: 0:00:07  time: 0.0346  data_time: 0.0067  memory: 173  
+2023/02/11 16:36:50 - mmengine - INFO - Iter(val) [400/515]    eta: 0:00:03  time: 0.0347  data_time: 0.0062  memory: 173  
+2023/02/11 16:36:54 - mmengine - INFO - Iter(val) [500/515]    eta: 0:00:00  time: 0.0358  data_time: 0.0064  memory: 173  
+2023/02/11 16:36:54 - mmengine - INFO - per class results:
+2023/02/11 16:36:54 - mmengine - INFO - 
++------------+-------+-------+
+|   Class    |  IoU  |  Acc  |
++------------+-------+-------+
+| background | 98.35 | 99.05 |
+| glomeruili | 42.45 | 63.33 |
++------------+-------+-------+
+2023/02/11 16:36:54 - mmengine - INFO - Iter(val) [515/515]  aAcc: 98.3700  mIoU: 70.4000  mAcc: 81.1900
+2023/02/11 16:37:17 - mmengine - INFO - Iter(train) [ 8100/16000]  lr: 9.5478e-03  eta: 0:29:29  time: 0.2231  data_time: 0.0027  memory: 3319  loss: 0.1009  decode.loss_ce: 0.1009  decode.acc_seg: 98.2306
+2023/02/11 16:37:39 - mmengine - INFO - Iter(train) [ 8200/16000]  lr: 9.5422e-03  eta: 0:29:07  time: 0.2227  data_time: 0.0027  memory: 3319  loss: 0.0203  decode.loss_ce: 0.0203  decode.acc_seg: 97.7321
+2023/02/11 16:38:01 - mmengine - INFO - Iter(train) [ 8300/16000]  lr: 9.5366e-03  eta: 0:28:44  time: 0.2226  data_time: 0.0028  memory: 3320  loss: 0.0127  decode.loss_ce: 0.0127  decode.acc_seg: 100.0000
+2023/02/11 16:38:24 - mmengine - INFO - Iter(train) [ 8400/16000]  lr: 9.5310e-03  eta: 0:28:22  time: 0.2234  data_time: 0.0026  memory: 3319  loss: 0.0231  decode.loss_ce: 0.0231  decode.acc_seg: 99.9786
+2023/02/11 16:38:46 - mmengine - INFO - Iter(train) [ 8500/16000]  lr: 9.5254e-03  eta: 0:27:59  time: 0.2233  data_time: 0.0029  memory: 3320  loss: 0.0276  decode.loss_ce: 0.0276  decode.acc_seg: 99.7328
+2023/02/11 16:39:08 - mmengine - INFO - Iter(train) [ 8600/16000]  lr: 9.5198e-03  eta: 0:27:37  time: 0.2230  data_time: 0.0027  memory: 3319  loss: 0.0487  decode.loss_ce: 0.0487  decode.acc_seg: 100.0000
+2023/02/11 16:39:31 - mmengine - INFO - Iter(train) [ 8700/16000]  lr: 9.5142e-03  eta: 0:27:14  time: 0.2229  data_time: 0.0029  memory: 3319  loss: 0.0220  decode.loss_ce: 0.0220  decode.acc_seg: 100.0000
+2023/02/11 16:39:53 - mmengine - INFO - Iter(train) [ 8800/16000]  lr: 9.5086e-03  eta: 0:26:52  time: 0.2236  data_time: 0.0031  memory: 3319  loss: 0.0081  decode.loss_ce: 0.0081  decode.acc_seg: 100.0000
+2023/02/11 16:40:15 - mmengine - INFO - Iter(train) [ 8900/16000]  lr: 9.5030e-03  eta: 0:26:29  time: 0.2233  data_time: 0.0029  memory: 3320  loss: 0.0231  decode.loss_ce: 0.0231  decode.acc_seg: 98.6890
+2023/02/11 16:40:38 - mmengine - INFO - Exp name: mobilenet-v3-d8_lraspp_1xb4-2k_glomeruli-256x256_20230211_160514
+2023/02/11 16:40:38 - mmengine - INFO - Iter(train) [ 9000/16000]  lr: 9.4974e-03  eta: 0:26:07  time: 0.2242  data_time: 0.0028  memory: 3319  loss: 0.0193  decode.loss_ce: 0.0193  decode.acc_seg: 100.0000
+2023/02/11 16:41:00 - mmengine - INFO - Iter(train) [ 9100/16000]  lr: 9.4918e-03  eta: 0:25:45  time: 0.2235  data_time: 0.0031  memory: 3319  loss: 0.0459  decode.loss_ce: 0.0459  decode.acc_seg: 99.3184
+2023/02/11 16:41:23 - mmengine - INFO - Iter(train) [ 9200/16000]  lr: 9.4862e-03  eta: 0:25:22  time: 0.2248  data_time: 0.0031  memory: 3320  loss: 0.0251  decode.loss_ce: 0.0251  decode.acc_seg: 100.0000
+2023/02/11 16:41:45 - mmengine - INFO - Iter(train) [ 9300/16000]  lr: 9.4806e-03  eta: 0:25:00  time: 0.2225  data_time: 0.0027  memory: 3320  loss: 0.0303  decode.loss_ce: 0.0303  decode.acc_seg: 100.0000
+2023/02/11 16:42:07 - mmengine - INFO - Iter(train) [ 9400/16000]  lr: 9.4750e-03  eta: 0:24:37  time: 0.2227  data_time: 0.0030  memory: 3320  loss: 0.0330  decode.loss_ce: 0.0330  decode.acc_seg: 97.4863
+2023/02/11 16:42:30 - mmengine - INFO - Iter(train) [ 9500/16000]  lr: 9.4694e-03  eta: 0:24:15  time: 0.2226  data_time: 0.0027  memory: 3320  loss: 0.0262  decode.loss_ce: 0.0262  decode.acc_seg: 99.8433
+2023/02/11 16:42:52 - mmengine - INFO - Iter(train) [ 9600/16000]  lr: 9.4638e-03  eta: 0:23:53  time: 0.2234  data_time: 0.0026  memory: 3319  loss: 0.0899  decode.loss_ce: 0.0899  decode.acc_seg: 95.7547
+2023/02/11 16:42:52 - mmengine - INFO - Saving checkpoint at 9600 iterations
+2023/02/11 16:42:57 - mmengine - INFO - Iter(val) [100/515]    eta: 0:00:13  time: 0.0303  data_time: 0.0019  memory: 173  
+2023/02/11 16:43:00 - mmengine - INFO - Iter(val) [200/515]    eta: 0:00:10  time: 0.0315  data_time: 0.0037  memory: 173  
+2023/02/11 16:43:03 - mmengine - INFO - Iter(val) [300/515]    eta: 0:00:07  time: 0.0353  data_time: 0.0071  memory: 173  
+2023/02/11 16:43:07 - mmengine - INFO - Iter(val) [400/515]    eta: 0:00:03  time: 0.0354  data_time: 0.0078  memory: 173  
+2023/02/11 16:43:10 - mmengine - INFO - Iter(val) [500/515]    eta: 0:00:00  time: 0.0353  data_time: 0.0073  memory: 173  
+2023/02/11 16:43:10 - mmengine - INFO - per class results:
+2023/02/11 16:43:10 - mmengine - INFO - 
++------------+-------+-------+
+|   Class    |  IoU  |  Acc  |
++------------+-------+-------+
+| background | 97.81 | 98.78 |
+| glomeruili | 29.95 | 48.78 |
++------------+-------+-------+
+2023/02/11 16:43:10 - mmengine - INFO - Iter(val) [515/515]  aAcc: 97.8300  mIoU: 63.8800  mAcc: 73.7800
+2023/02/11 16:43:33 - mmengine - INFO - Iter(train) [ 9700/16000]  lr: 9.4582e-03  eta: 0:23:30  time: 0.2237  data_time: 0.0028  memory: 3321  loss: 0.0174  decode.loss_ce: 0.0174  decode.acc_seg: 100.0000
+2023/02/11 16:43:55 - mmengine - INFO - Iter(train) [ 9800/16000]  lr: 9.4526e-03  eta: 0:23:08  time: 0.2240  data_time: 0.0029  memory: 3319  loss: 0.0323  decode.loss_ce: 0.0323  decode.acc_seg: 100.0000
+2023/02/11 16:44:18 - mmengine - INFO - Iter(train) [ 9900/16000]  lr: 9.4470e-03  eta: 0:22:45  time: 0.2243  data_time: 0.0033  memory: 3319  loss: 0.0423  decode.loss_ce: 0.0423  decode.acc_seg: 97.8705
+2023/02/11 16:44:40 - mmengine - INFO - Exp name: mobilenet-v3-d8_lraspp_1xb4-2k_glomeruli-256x256_20230211_160514
+2023/02/11 16:44:40 - mmengine - INFO - Iter(train) [10000/16000]  lr: 9.4414e-03  eta: 0:22:23  time: 0.2236  data_time: 0.0032  memory: 3319  loss: 0.0364  decode.loss_ce: 0.0364  decode.acc_seg: 97.4995
+2023/02/11 16:45:02 - mmengine - INFO - Iter(train) [10100/16000]  lr: 9.4358e-03  eta: 0:22:01  time: 0.2232  data_time: 0.0027  memory: 3319  loss: 0.0398  decode.loss_ce: 0.0398  decode.acc_seg: 99.3363
+2023/02/11 16:45:25 - mmengine - INFO - Iter(train) [10200/16000]  lr: 9.4302e-03  eta: 0:21:38  time: 0.2261  data_time: 0.0033  memory: 3319  loss: 0.0053  decode.loss_ce: 0.0053  decode.acc_seg: 100.0000
+2023/02/11 16:45:47 - mmengine - INFO - Iter(train) [10300/16000]  lr: 9.4246e-03  eta: 0:21:16  time: 0.2248  data_time: 0.0033  memory: 3319  loss: 0.1074  decode.loss_ce: 0.1074  decode.acc_seg: 87.5066
+2023/02/11 16:46:10 - mmengine - INFO - Iter(train) [10400/16000]  lr: 9.4190e-03  eta: 0:20:53  time: 0.2231  data_time: 0.0030  memory: 3319  loss: 0.0389  decode.loss_ce: 0.0389  decode.acc_seg: 98.6333
+2023/02/11 16:46:32 - mmengine - INFO - Iter(train) [10500/16000]  lr: 9.4134e-03  eta: 0:20:31  time: 0.2243  data_time: 0.0030  memory: 3319  loss: 0.0219  decode.loss_ce: 0.0219  decode.acc_seg: 99.6967
+2023/02/11 16:46:55 - mmengine - INFO - Iter(train) [10600/16000]  lr: 9.4078e-03  eta: 0:20:09  time: 0.2245  data_time: 0.0029  memory: 3319  loss: 0.0472  decode.loss_ce: 0.0472  decode.acc_seg: 97.6325
+2023/02/11 16:47:17 - mmengine - INFO - Iter(train) [10700/16000]  lr: 9.4022e-03  eta: 0:19:46  time: 0.2232  data_time: 0.0030  memory: 3321  loss: 0.0235  decode.loss_ce: 0.0235  decode.acc_seg: 99.2432
+2023/02/11 16:47:40 - mmengine - INFO - Iter(train) [10800/16000]  lr: 9.3965e-03  eta: 0:19:24  time: 0.2241  data_time: 0.0031  memory: 3320  loss: 0.0363  decode.loss_ce: 0.0363  decode.acc_seg: 100.0000
+2023/02/11 16:48:02 - mmengine - INFO - Iter(train) [10900/16000]  lr: 9.3909e-03  eta: 0:19:02  time: 0.2240  data_time: 0.0029  memory: 3319  loss: 0.0275  decode.loss_ce: 0.0275  decode.acc_seg: 97.1807
+2023/02/11 16:48:24 - mmengine - INFO - Exp name: mobilenet-v3-d8_lraspp_1xb4-2k_glomeruli-256x256_20230211_160514
+2023/02/11 16:48:24 - mmengine - INFO - Iter(train) [11000/16000]  lr: 9.3853e-03  eta: 0:18:39  time: 0.2237  data_time: 0.0027  memory: 3319  loss: 0.0209  decode.loss_ce: 0.0209  decode.acc_seg: 99.3588
+2023/02/11 16:48:47 - mmengine - INFO - Iter(train) [11100/16000]  lr: 9.3797e-03  eta: 0:18:17  time: 0.2260  data_time: 0.0032  memory: 3319  loss: 0.0363  decode.loss_ce: 0.0363  decode.acc_seg: 100.0000
+2023/02/11 16:49:09 - mmengine - INFO - Iter(train) [11200/16000]  lr: 9.3741e-03  eta: 0:17:55  time: 0.2253  data_time: 0.0029  memory: 3319  loss: 0.0448  decode.loss_ce: 0.0448  decode.acc_seg: 99.0312
+2023/02/11 16:49:09 - mmengine - INFO - Saving checkpoint at 11200 iterations
+2023/02/11 16:49:14 - mmengine - INFO - Iter(val) [100/515]    eta: 0:00:14  time: 0.0335  data_time: 0.0036  memory: 173  
+2023/02/11 16:49:17 - mmengine - INFO - Iter(val) [200/515]    eta: 0:00:10  time: 0.0320  data_time: 0.0037  memory: 173  
+2023/02/11 16:49:21 - mmengine - INFO - Iter(val) [300/515]    eta: 0:00:07  time: 0.0362  data_time: 0.0089  memory: 173  
+2023/02/11 16:49:24 - mmengine - INFO - Iter(val) [400/515]    eta: 0:00:03  time: 0.0346  data_time: 0.0063  memory: 173  
+2023/02/11 16:49:27 - mmengine - INFO - Iter(val) [500/515]    eta: 0:00:00  time: 0.0339  data_time: 0.0056  memory: 173  
+2023/02/11 16:49:28 - mmengine - INFO - per class results:
+2023/02/11 16:49:28 - mmengine - INFO - 
++------------+-------+-------+
+|   Class    |  IoU  |  Acc  |
++------------+-------+-------+
+| background | 97.09 | 97.47 |
+| glomeruili | 34.61 | 79.79 |
++------------+-------+-------+
+2023/02/11 16:49:28 - mmengine - INFO - Iter(val) [515/515]  aAcc: 97.1400  mIoU: 65.8500  mAcc: 88.6300
+2023/02/11 16:49:50 - mmengine - INFO - Iter(train) [11300/16000]  lr: 9.3685e-03  eta: 0:17:32  time: 0.2243  data_time: 0.0033  memory: 3319  loss: 0.0263  decode.loss_ce: 0.0263  decode.acc_seg: 98.3507
+2023/02/11 16:50:13 - mmengine - INFO - Iter(train) [11400/16000]  lr: 9.3629e-03  eta: 0:17:10  time: 0.2253  data_time: 0.0032  memory: 3320  loss: 0.0389  decode.loss_ce: 0.0389  decode.acc_seg: 95.1538
+2023/02/11 16:50:35 - mmengine - INFO - Iter(train) [11500/16000]  lr: 9.3573e-03  eta: 0:16:47  time: 0.2239  data_time: 0.0028  memory: 3320  loss: 0.0499  decode.loss_ce: 0.0499  decode.acc_seg: 96.4292
+2023/02/11 16:50:58 - mmengine - INFO - Iter(train) [11600/16000]  lr: 9.3517e-03  eta: 0:16:25  time: 0.2259  data_time: 0.0033  memory: 3319  loss: 0.0416  decode.loss_ce: 0.0416  decode.acc_seg: 99.6912
+2023/02/11 16:51:20 - mmengine - INFO - Iter(train) [11700/16000]  lr: 9.3461e-03  eta: 0:16:03  time: 0.2245  data_time: 0.0030  memory: 3319  loss: 0.0566  decode.loss_ce: 0.0566  decode.acc_seg: 99.2762
+2023/02/11 16:51:43 - mmengine - INFO - Iter(train) [11800/16000]  lr: 9.3404e-03  eta: 0:15:40  time: 0.2245  data_time: 0.0029  memory: 3320  loss: 0.0197  decode.loss_ce: 0.0197  decode.acc_seg: 100.0000
+2023/02/11 16:52:05 - mmengine - INFO - Iter(train) [11900/16000]  lr: 9.3348e-03  eta: 0:15:18  time: 0.2249  data_time: 0.0030  memory: 3320  loss: 0.0192  decode.loss_ce: 0.0192  decode.acc_seg: 100.0000
+2023/02/11 16:52:27 - mmengine - INFO - Exp name: mobilenet-v3-d8_lraspp_1xb4-2k_glomeruli-256x256_20230211_160514
+2023/02/11 16:52:27 - mmengine - INFO - Iter(train) [12000/16000]  lr: 9.3292e-03  eta: 0:14:55  time: 0.2249  data_time: 0.0034  memory: 3319  loss: 0.0311  decode.loss_ce: 0.0311  decode.acc_seg: 99.9511
+2023/02/11 16:52:50 - mmengine - INFO - Iter(train) [12100/16000]  lr: 9.3236e-03  eta: 0:14:33  time: 0.2229  data_time: 0.0029  memory: 3319  loss: 0.0239  decode.loss_ce: 0.0239  decode.acc_seg: 99.6547
+2023/02/11 16:53:12 - mmengine - INFO - Iter(train) [12200/16000]  lr: 9.3180e-03  eta: 0:14:11  time: 0.2244  data_time: 0.0030  memory: 3321  loss: 0.0495  decode.loss_ce: 0.0495  decode.acc_seg: 99.4630
+2023/02/11 16:53:35 - mmengine - INFO - Iter(train) [12300/16000]  lr: 9.3124e-03  eta: 0:13:48  time: 0.2246  data_time: 0.0028  memory: 3320  loss: 0.0216  decode.loss_ce: 0.0216  decode.acc_seg: 100.0000
+2023/02/11 16:53:57 - mmengine - INFO - Iter(train) [12400/16000]  lr: 9.3068e-03  eta: 0:13:26  time: 0.2252  data_time: 0.0031  memory: 3321  loss: 0.0243  decode.loss_ce: 0.0243  decode.acc_seg: 98.9759
+2023/02/11 16:54:20 - mmengine - INFO - Iter(train) [12500/16000]  lr: 9.3012e-03  eta: 0:13:04  time: 0.2245  data_time: 0.0030  memory: 3319  loss: 0.0749  decode.loss_ce: 0.0749  decode.acc_seg: 91.6260
+2023/02/11 16:54:42 - mmengine - INFO - Iter(train) [12600/16000]  lr: 9.2955e-03  eta: 0:12:41  time: 0.2243  data_time: 0.0029  memory: 3320  loss: 0.0146  decode.loss_ce: 0.0146  decode.acc_seg: 100.0000
+2023/02/11 16:55:04 - mmengine - INFO - Iter(train) [12700/16000]  lr: 9.2899e-03  eta: 0:12:19  time: 0.2245  data_time: 0.0031  memory: 3319  loss: 0.0215  decode.loss_ce: 0.0215  decode.acc_seg: 95.8569
+2023/02/11 16:55:27 - mmengine - INFO - Iter(train) [12800/16000]  lr: 9.2843e-03  eta: 0:11:56  time: 0.2235  data_time: 0.0028  memory: 3319  loss: 0.0492  decode.loss_ce: 0.0492  decode.acc_seg: 98.9779
+2023/02/11 16:55:27 - mmengine - INFO - Saving checkpoint at 12800 iterations
+2023/02/11 16:55:32 - mmengine - INFO - Iter(val) [100/515]    eta: 0:00:14  time: 0.0333  data_time: 0.0041  memory: 173  
+2023/02/11 16:55:35 - mmengine - INFO - Iter(val) [200/515]    eta: 0:00:10  time: 0.0319  data_time: 0.0042  memory: 173  
+2023/02/11 16:55:38 - mmengine - INFO - Iter(val) [300/515]    eta: 0:00:07  time: 0.0367  data_time: 0.0061  memory: 173  
+2023/02/11 16:55:42 - mmengine - INFO - Iter(val) [400/515]    eta: 0:00:03  time: 0.0349  data_time: 0.0054  memory: 173  
+2023/02/11 16:55:45 - mmengine - INFO - Iter(val) [500/515]    eta: 0:00:00  time: 0.0350  data_time: 0.0077  memory: 173  
+2023/02/11 16:55:46 - mmengine - INFO - per class results:
+2023/02/11 16:55:46 - mmengine - INFO - 
++------------+-------+-------+
+|   Class    |  IoU  |  Acc  |
++------------+-------+-------+
+| background |  95.1 | 95.42 |
+| glomeruili | 24.51 | 82.47 |
++------------+-------+-------+
+2023/02/11 16:55:46 - mmengine - INFO - Iter(val) [515/515]  aAcc: 95.1700  mIoU: 59.8000  mAcc: 88.9400
+2023/02/11 16:56:08 - mmengine - INFO - Iter(train) [12900/16000]  lr: 9.2787e-03  eta: 0:11:34  time: 0.2243  data_time: 0.0032  memory: 3320  loss: 0.0464  decode.loss_ce: 0.0464  decode.acc_seg: 100.0000
+2023/02/11 16:56:30 - mmengine - INFO - Exp name: mobilenet-v3-d8_lraspp_1xb4-2k_glomeruli-256x256_20230211_160514
+2023/02/11 16:56:30 - mmengine - INFO - Iter(train) [13000/16000]  lr: 9.2731e-03  eta: 0:11:12  time: 0.2258  data_time: 0.0031  memory: 3320  loss: 0.0205  decode.loss_ce: 0.0205  decode.acc_seg: 98.2678
+2023/02/11 16:56:53 - mmengine - INFO - Iter(train) [13100/16000]  lr: 9.2675e-03  eta: 0:10:49  time: 0.2244  data_time: 0.0029  memory: 3319  loss: 0.0319  decode.loss_ce: 0.0319  decode.acc_seg: 99.3952
+2023/02/11 16:57:15 - mmengine - INFO - Iter(train) [13200/16000]  lr: 9.2618e-03  eta: 0:10:27  time: 0.2252  data_time: 0.0028  memory: 3319  loss: 0.0204  decode.loss_ce: 0.0204  decode.acc_seg: 93.6899
+2023/02/11 16:57:38 - mmengine - INFO - Iter(train) [13300/16000]  lr: 9.2562e-03  eta: 0:10:04  time: 0.2253  data_time: 0.0033  memory: 3319  loss: 0.0211  decode.loss_ce: 0.0211  decode.acc_seg: 100.0000
+2023/02/11 16:58:00 - mmengine - INFO - Iter(train) [13400/16000]  lr: 9.2506e-03  eta: 0:09:42  time: 0.2236  data_time: 0.0028  memory: 3319  loss: 0.0237  decode.loss_ce: 0.0237  decode.acc_seg: 100.0000
+2023/02/11 16:58:23 - mmengine - INFO - Iter(train) [13500/16000]  lr: 9.2450e-03  eta: 0:09:20  time: 0.2248  data_time: 0.0035  memory: 3319  loss: 0.0334  decode.loss_ce: 0.0334  decode.acc_seg: 99.1418
+2023/02/11 16:58:45 - mmengine - INFO - Iter(train) [13600/16000]  lr: 9.2394e-03  eta: 0:08:57  time: 0.2246  data_time: 0.0030  memory: 3319  loss: 0.0265  decode.loss_ce: 0.0265  decode.acc_seg: 98.9702
+2023/02/11 16:59:07 - mmengine - INFO - Iter(train) [13700/16000]  lr: 9.2338e-03  eta: 0:08:35  time: 0.2251  data_time: 0.0031  memory: 3319  loss: 0.0265  decode.loss_ce: 0.0265  decode.acc_seg: 100.0000
+2023/02/11 16:59:30 - mmengine - INFO - Iter(train) [13800/16000]  lr: 9.2281e-03  eta: 0:08:12  time: 0.2255  data_time: 0.0034  memory: 3319  loss: 0.0200  decode.loss_ce: 0.0200  decode.acc_seg: 100.0000
+2023/02/11 16:59:52 - mmengine - INFO - Iter(train) [13900/16000]  lr: 9.2225e-03  eta: 0:07:50  time: 0.2239  data_time: 0.0028  memory: 3319  loss: 0.0185  decode.loss_ce: 0.0185  decode.acc_seg: 97.0103
+2023/02/11 17:00:15 - mmengine - INFO - Exp name: mobilenet-v3-d8_lraspp_1xb4-2k_glomeruli-256x256_20230211_160514
+2023/02/11 17:00:15 - mmengine - INFO - Iter(train) [14000/16000]  lr: 9.2169e-03  eta: 0:07:28  time: 0.2239  data_time: 0.0029  memory: 3319  loss: 0.0409  decode.loss_ce: 0.0409  decode.acc_seg: 96.6721
+2023/02/11 17:00:37 - mmengine - INFO - Iter(train) [14100/16000]  lr: 9.2113e-03  eta: 0:07:05  time: 0.2239  data_time: 0.0028  memory: 3319  loss: 0.0220  decode.loss_ce: 0.0220  decode.acc_seg: 100.0000
+2023/02/11 17:01:00 - mmengine - INFO - Iter(train) [14200/16000]  lr: 9.2057e-03  eta: 0:06:43  time: 0.2240  data_time: 0.0026  memory: 3319  loss: 0.0327  decode.loss_ce: 0.0327  decode.acc_seg: 96.7709
+2023/02/11 17:01:22 - mmengine - INFO - Iter(train) [14300/16000]  lr: 9.2000e-03  eta: 0:06:20  time: 0.2242  data_time: 0.0029  memory: 3321  loss: 0.0196  decode.loss_ce: 0.0196  decode.acc_seg: 100.0000
+2023/02/11 17:01:45 - mmengine - INFO - Iter(train) [14400/16000]  lr: 9.1944e-03  eta: 0:05:58  time: 0.2248  data_time: 0.0032  memory: 3319  loss: 0.0343  decode.loss_ce: 0.0343  decode.acc_seg: 98.6125
+2023/02/11 17:01:45 - mmengine - INFO - Saving checkpoint at 14400 iterations
+2023/02/11 17:01:49 - mmengine - INFO - Iter(val) [100/515]    eta: 0:00:14  time: 0.0306  data_time: 0.0034  memory: 173  
+2023/02/11 17:01:53 - mmengine - INFO - Iter(val) [200/515]    eta: 0:00:10  time: 0.0297  data_time: 0.0023  memory: 173  
+2023/02/11 17:01:56 - mmengine - INFO - Iter(val) [300/515]    eta: 0:00:07  time: 0.0368  data_time: 0.0065  memory: 173  
+2023/02/11 17:01:59 - mmengine - INFO - Iter(val) [400/515]    eta: 0:00:03  time: 0.0348  data_time: 0.0072  memory: 173  
+2023/02/11 17:02:03 - mmengine - INFO - Iter(val) [500/515]    eta: 0:00:00  time: 0.0365  data_time: 0.0090  memory: 173  
+2023/02/11 17:02:03 - mmengine - INFO - per class results:
+2023/02/11 17:02:03 - mmengine - INFO - 
++------------+-------+-------+
+|   Class    |  IoU  |  Acc  |
++------------+-------+-------+
+| background | 98.76 | 99.32 |
+| glomeruili |  52.5 | 70.91 |
++------------+-------+-------+
+2023/02/11 17:02:03 - mmengine - INFO - Iter(val) [515/515]  aAcc: 98.7800  mIoU: 75.6300  mAcc: 85.1200
+2023/02/11 17:02:26 - mmengine - INFO - Iter(train) [14500/16000]  lr: 9.1888e-03  eta: 0:05:36  time: 0.2248  data_time: 0.0034  memory: 3321  loss: 0.0320  decode.loss_ce: 0.0320  decode.acc_seg: 100.0000
+2023/02/11 17:02:48 - mmengine - INFO - Iter(train) [14600/16000]  lr: 9.1832e-03  eta: 0:05:13  time: 0.2234  data_time: 0.0029  memory: 3320  loss: 0.0257  decode.loss_ce: 0.0257  decode.acc_seg: 98.6214
+2023/02/11 17:03:11 - mmengine - INFO - Iter(train) [14700/16000]  lr: 9.1776e-03  eta: 0:04:51  time: 0.2245  data_time: 0.0031  memory: 3320  loss: 0.0294  decode.loss_ce: 0.0294  decode.acc_seg: 99.8634
+2023/02/11 17:03:33 - mmengine - INFO - Iter(train) [14800/16000]  lr: 9.1719e-03  eta: 0:04:28  time: 0.2235  data_time: 0.0026  memory: 3319  loss: 0.0077  decode.loss_ce: 0.0077  decode.acc_seg: 100.0000
+2023/02/11 17:03:55 - mmengine - INFO - Iter(train) [14900/16000]  lr: 9.1663e-03  eta: 0:04:06  time: 0.2247  data_time: 0.0030  memory: 3320  loss: 0.0502  decode.loss_ce: 0.0502  decode.acc_seg: 98.8093
+2023/02/11 17:04:18 - mmengine - INFO - Exp name: mobilenet-v3-d8_lraspp_1xb4-2k_glomeruli-256x256_20230211_160514
+2023/02/11 17:04:18 - mmengine - INFO - Iter(train) [15000/16000]  lr: 9.1607e-03  eta: 0:03:44  time: 0.2252  data_time: 0.0032  memory: 3321  loss: 0.0621  decode.loss_ce: 0.0621  decode.acc_seg: 97.0074
+2023/02/11 17:04:40 - mmengine - INFO - Iter(train) [15100/16000]  lr: 9.1551e-03  eta: 0:03:21  time: 0.2237  data_time: 0.0033  memory: 3319  loss: 0.0205  decode.loss_ce: 0.0205  decode.acc_seg: 99.6786
+2023/02/11 17:05:03 - mmengine - INFO - Iter(train) [15200/16000]  lr: 9.1494e-03  eta: 0:02:59  time: 0.2245  data_time: 0.0027  memory: 3320  loss: 0.0157  decode.loss_ce: 0.0157  decode.acc_seg: 99.3421
+2023/02/11 17:05:25 - mmengine - INFO - Iter(train) [15300/16000]  lr: 9.1438e-03  eta: 0:02:36  time: 0.2231  data_time: 0.0028  memory: 3320  loss: 0.0244  decode.loss_ce: 0.0244  decode.acc_seg: 97.6993
+2023/02/11 17:05:48 - mmengine - INFO - Iter(train) [15400/16000]  lr: 9.1382e-03  eta: 0:02:14  time: 0.2242  data_time: 0.0031  memory: 3320  loss: 0.0470  decode.loss_ce: 0.0470  decode.acc_seg: 100.0000
+2023/02/11 17:06:10 - mmengine - INFO - Iter(train) [15500/16000]  lr: 9.1326e-03  eta: 0:01:52  time: 0.2231  data_time: 0.0030  memory: 3319  loss: 0.0218  decode.loss_ce: 0.0218  decode.acc_seg: 98.4193
+2023/02/11 17:06:33 - mmengine - INFO - Iter(train) [15600/16000]  lr: 9.1269e-03  eta: 0:01:29  time: 0.2242  data_time: 0.0030  memory: 3319  loss: 0.0320  decode.loss_ce: 0.0320  decode.acc_seg: 99.5562
+2023/02/11 17:06:55 - mmengine - INFO - Iter(train) [15700/16000]  lr: 9.1213e-03  eta: 0:01:07  time: 0.2259  data_time: 0.0034  memory: 3319  loss: 0.0454  decode.loss_ce: 0.0454  decode.acc_seg: 99.2460
+2023/02/11 17:07:17 - mmengine - INFO - Iter(train) [15800/16000]  lr: 9.1157e-03  eta: 0:00:44  time: 0.2226  data_time: 0.0029  memory: 3319  loss: 0.0235  decode.loss_ce: 0.0235  decode.acc_seg: 99.5385
+2023/02/11 17:07:40 - mmengine - INFO - Iter(train) [15900/16000]  lr: 9.1101e-03  eta: 0:00:22  time: 0.2248  data_time: 0.0031  memory: 3319  loss: 0.0440  decode.loss_ce: 0.0440  decode.acc_seg: 99.7412
+2023/02/11 17:08:02 - mmengine - INFO - Exp name: mobilenet-v3-d8_lraspp_1xb4-2k_glomeruli-256x256_20230211_160514
+2023/02/11 17:08:02 - mmengine - INFO - Iter(train) [16000/16000]  lr: 9.1044e-03  eta: 0:00:00  time: 0.2250  data_time: 0.0029  memory: 3319  loss: 0.0217  decode.loss_ce: 0.0217  decode.acc_seg: 97.3496
+2023/02/11 17:08:02 - mmengine - INFO - Saving checkpoint at 16000 iterations
+2023/02/11 17:08:07 - mmengine - INFO - Iter(val) [100/515]    eta: 0:00:14  time: 0.0332  data_time: 0.0051  memory: 173  
+2023/02/11 17:08:10 - mmengine - INFO - Iter(val) [200/515]    eta: 0:00:10  time: 0.0320  data_time: 0.0041  memory: 173  
+2023/02/11 17:08:14 - mmengine - INFO - Iter(val) [300/515]    eta: 0:00:07  time: 0.0356  data_time: 0.0079  memory: 173  
+2023/02/11 17:08:17 - mmengine - INFO - Iter(val) [400/515]    eta: 0:00:03  time: 0.0358  data_time: 0.0064  memory: 173  
+2023/02/11 17:08:21 - mmengine - INFO - Iter(val) [500/515]    eta: 0:00:00  time: 0.0346  data_time: 0.0071  memory: 173  
+2023/02/11 17:08:21 - mmengine - INFO - per class results:
+2023/02/11 17:08:21 - mmengine - INFO - 
++------------+-------+-------+
+|   Class    |  IoU  |  Acc  |
++------------+-------+-------+
+| background | 97.36 | 98.03 |
+| glomeruili | 31.83 | 64.12 |
++------------+-------+-------+
+2023/02/11 17:08:21 - mmengine - INFO - Iter(val) [515/515]  aAcc: 97.3900  mIoU: 64.5900  mAcc: 81.0800
